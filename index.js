@@ -1,15 +1,13 @@
-const express = require('express');
+const express = require("express");
 const app = express();
-const cors = require('cors');
-require('dotenv').config()
+const cors = require("cors");
+require("dotenv").config();
 const port = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 // middleware
 app.use(cors());
 app.use(express.json());
-
-
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.x4eccmn.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -19,7 +17,7 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
 async function run() {
@@ -27,28 +25,66 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
- const postDataCollection = client.db("shareWave").collection("postData");
+    const postDataCollection = client.db("shareWave").collection("postData");
+    const commentCollection = client.db("shareWave").collection("comment");
+    const reactionCollection = client.db("shareWave").collection("reaction");
+    // post data api
+    app.get("/post", async (req, res) => {
+      const result = await postDataCollection.find().toArray();
+      res.send(result);
+    });
+    app.post("/post", async (req, res) => {
+      const data = req.body;
+      const result = await postDataCollection.insertOne(data);
+      res.send(result);
+    });
 
-// post data api 
-app.get('/post', async(req,res)=>{
-    const result  = await postDataCollection.find().toArray();
-    res.send(result);
-})
- app.post('/post', async(req,res)=>{
+    //  reaction api
+    app.get('/reaction/:email', async(req, res) => {
+          const email= req.params.email;
+        //   console.log(email)
+          const query={email:email}
+          const previousCount = await reactionCollection.find(query).toArray()
+         
+          const count  = await reactionCollection.find().toArray()
+        //   console.log(data)
+          
+        //   const data = await reactionCollection.find().toArray();
+          res.send({previousCount,count})
+    })
+    app.patch('/reaction/:id', async(req,res)=>{
+
+    })
+  app.post('/reaction',async(req,res)=>{
     const data = req.body;
-    const result = await postDataCollection.insertOne(data);
-    res.send(result)
- })
+    // const query = {email:data.email }
+    // const result = await reactionCollection.find(query).toArray();
+    // const checkExist = result.find(exist=> exist.id === data.id)
+    //  if(checkExist){
+    //    return res.send({message: "already loved",count:checkExist.count})
+    //  }
+
+    // console.log(checkExist)
+    const newCount = await reactionCollection.insertOne(data)
+    res.send(newCount)
+    
+  })
 
 
+    
 
-
-
-
+    // comment api
+    app.post("/comment", async (req, res) => {
+      const comment = req.body;
+      const result = await commentCollection.insertOne(comment);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
@@ -56,12 +92,10 @@ app.get('/post', async(req,res)=>{
 }
 run().catch(console.dir);
 
+app.get("/", (req, res) => {
+  res.send("server is running");
+});
 
-
-app.get('/', (req, res) => {
-    res.send('server is running')
-  })
-  
-  app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-  })
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
