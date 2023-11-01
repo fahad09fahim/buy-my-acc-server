@@ -39,32 +39,46 @@ async function run() {
       res.send(result);
     });
 
-    //  reaction api
-    app.get('/reaction/:email', async(req, res) => {
-          const email= req.params.email;
-        //   console.log(email)
-          const query={email:email}
-          const previousCount = await reactionCollection.find(query).toArray()
-         
-          const count  = await reactionCollection.find().toArray()
-        //   console.log(data)
-          
-        //   const data = await reactionCollection.find().toArray();
-          res.send({previousCount,count})
+    app.patch("/post", async (req, res) => {
+      const data= req.body
+      const id = data.id
+      const countLove = data.count
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          count: countLove
+        },
+      };
+      const result = await postDataCollection.updateOne(filter, updateDoc);
+      console.log(result)
     })
-    app.patch('/reaction/:id', async(req,res)=>{
 
-    })
+    //  reaction api
+ app.get("/reaction/:id", async(req,res)=>{
+  const id = req.params.id;
+  const query = {id: id}
+  const findReaction = await reactionCollection.find(query).toArray();
+  const sum = findReaction.reduce((acc, currentValue) => {
+    return acc + currentValue.count;
+  }, 0);
+  // console.log(findReaction)
+  const result = {
+    id: id,
+    sum: sum
+  };
+  res.send({result})
+
+ })
   app.post('/reaction',async(req,res)=>{
     const data = req.body;
-    // const query = {email:data.email }
-    // const result = await reactionCollection.find(query).toArray();
-    // const checkExist = result.find(exist=> exist.id === data.id)
-    //  if(checkExist){
-    //    return res.send({message: "already loved",count:checkExist.count})
-    //  }
-
+    const query = {email:data.email }
+    const result = await reactionCollection.find(query).toArray();
+    const checkExist = result.find(exist=> exist.id === data.id)
     // console.log(checkExist)
+     if(checkExist){
+      
+       return res.send({message: "already loved",count:checkExist.count})
+     }
     const newCount = await reactionCollection.insertOne(data)
     res.send(newCount)
     
@@ -74,6 +88,13 @@ async function run() {
     
 
     // comment api
+    app.get("/comment/:id",async(req,res)=>{
+        const id = req.params.id;
+        const query = {id:id}
+        const result = await commentCollection.find(query).toArray()
+        res.send(result)
+
+    })
     app.post("/comment", async (req, res) => {
       const comment = req.body;
       const result = await commentCollection.insertOne(comment);
