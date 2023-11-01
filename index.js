@@ -50,7 +50,7 @@ async function run() {
         },
       };
       const result = await postDataCollection.updateOne(filter, updateDoc);
-      console.log(result)
+     res.send(result)
     })
 
     //  reaction api
