@@ -41,6 +41,7 @@ async function run() {
 
     app.patch("/post", async (req, res) => {
       const data= req.body
+    console.log(data)
       const id = data.id
       const countLove = data.count
       const filter = { _id: new ObjectId(id) };
@@ -54,7 +55,7 @@ async function run() {
     })
 
     //  reaction api
- app.get("/reaction/:id", async(req,res)=>{
+    app.get("/reaction/:id", async(req,res)=>{
   const id = req.params.id;
   const query = {id: id}
   const findReaction = await reactionCollection.find(query).toArray();
@@ -69,14 +70,14 @@ async function run() {
   res.send({result})
 
  })
-  app.post('/reaction',async(req,res)=>{
+ app.post('/reaction',async(req,res)=>{
     const data = req.body;
     const query = {email:data.email }
     const result = await reactionCollection.find(query).toArray();
+    // console.log(result)
     const checkExist = result.find(exist=> exist.id === data.id)
-    // console.log(checkExist)
+    // console.log(checkExist.count)
      if(checkExist){
-      
        return res.send({message: "already loved",count:checkExist.count})
      }
     const newCount = await reactionCollection.insertOne(data)
@@ -112,6 +113,8 @@ async function run() {
   }
 }
 run().catch(console.dir);
+
+
 
 app.get("/", (req, res) => {
   res.send("server is running");
